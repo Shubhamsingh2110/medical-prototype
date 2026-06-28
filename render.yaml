@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: medical-prototype-api
+    runtime: node
+    rootDir: apps/api
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: free
+
