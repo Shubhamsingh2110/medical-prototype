@@ -19,17 +19,24 @@ export type TranscriptEntry = {
 
 export type MedicalReport = {
   reportTitle: string;
-  consultationSummary: string;
-  chiefComplaint: string;
-  historyOfPresentIllness: string;
-  symptoms: string[];
-  doctorObservations: string[];
-  patientStatements: string[];
-  assessment: string;
-  carePlan: string[];
-  followUpInstructions: string;
-  redFlags: string[];
-  transcriptHighlights: string[];
+  summary?: string;
+  observation?: string;
+  precaution?: string;
+  consultationSummary?: string;
+  doctorScript?: string;
+  patientScript?: string;
+  chiefComplaint?: string;
+  historyOfPresentIllness?: string;
+  symptoms?: string[];
+  doctorObservations?: string[];
+  patientStatements?: string[];
+  observationSummary?: string;
+  assessment?: string;
+  carePlan?: string[];
+  precautions?: string[];
+  followUpInstructions?: string;
+  redFlags?: string[];
+  transcriptHighlights?: string[];
   generatedAt: string;
   model: string;
 };

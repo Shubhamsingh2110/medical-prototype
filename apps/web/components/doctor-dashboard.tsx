@@ -75,11 +75,15 @@ export function DoctorDashboard() {
   }
 
   async function refreshConsultation(consultationId: string) {
-    const consultation = await getConsultationById(consultationId);
-    setActiveConsultation(consultation);
-    setConsultations((current) =>
-      current.map((item) => (item.id === consultation.id ? consultation : item)),
-    );
+    try {
+      const consultation = await getConsultationById(consultationId);
+      setActiveConsultation(consultation);
+      setConsultations((current) =>
+        current.map((item) => (item.id === consultation.id ? consultation : item)),
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not refresh consultation.");
+    }
   }
 
   async function handleCreate() {
@@ -330,7 +334,12 @@ export function DoctorDashboard() {
               <button
                 type="button"
                 key={consultation.id}
-                onClick={() => setActiveConsultation(consultation)}
+                onClick={() => {
+                  setError(null);
+                  setFeedback(null);
+                  setActiveConsultation(consultation);
+                  void refreshConsultation(consultation.id);
+                }}
                 className={`w-full rounded-[1rem] border px-4 py-4 text-left transition ${
                   activeConsultation?.id === consultation.id
                     ? "border-[var(--accent)] bg-[var(--surface-strong)]"

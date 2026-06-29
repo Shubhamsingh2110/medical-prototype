@@ -24,55 +24,38 @@ function buildPrompt(consultation: ConsultationRecord) {
     .join("\n");
 
   return [
-    "Create a structured medical consultation report in JSON using both doctor and patient transcript references.",
+    "Create a concise AI medical consultation report from the transcript reference.",
     `Language: ${consultation.language}`,
     `Doctor: ${consultation.doctorName}`,
     `Patient: ${consultation.patientName}`,
     `Call type: ${consultation.callType}`,
     `Chief concern: ${consultation.chiefConcern}`,
-    "Base the report on the transcript from both sides of the consultation.",
-    "Return valid JSON with keys: reportTitle, consultationSummary, chiefComplaint, historyOfPresentIllness, symptoms, doctorObservations, patientStatements, assessment, carePlan, followUpInstructions, redFlags, transcriptHighlights.",
+    "Use the transcript only as source material. Do not copy the script or include speaker-by-speaker dialogue.",
+    "Return valid JSON with exactly these keys: reportTitle, summary, observation, precaution.",
+    "summary must be 2 to 4 concise sentences about the main consultation context.",
+    "observation must be 2 to 4 clinically useful sentences based on what the patient reported and what the doctor noted.",
+    "precaution must be 3 to 5 concise practical precautions or suggestions, written as a short paragraph.",
     "Do not invent information that is not supported by the transcript.",
     "If details are missing, clearly say they require doctor confirmation.",
-    "Keep the style professional and clinically readable.",
+    "Keep the report short, professional, and easy for a doctor to review.",
     "Transcript:",
     transcript,
   ].join("\n");
 }
 
 function buildFallbackReport(consultation: ConsultationRecord): MedicalReport {
-  const patientLines = consultation.transcript
-    .filter((entry) => entry.speaker === "patient")
-    .map((entry) => entry.text);
-  const doctorLines = consultation.transcript
-    .filter((entry) => entry.speaker === "doctor")
-    .map((entry) => entry.text);
-  const patientText = patientLines.join(" ");
+  const hasPatientInput = consultation.transcript.some((entry) => entry.speaker === "patient");
+  const hasDoctorInput = consultation.transcript.some((entry) => entry.speaker === "doctor");
 
   return {
     reportTitle: `Medical Consultation Report - ${consultation.patientName}`,
-    consultationSummary:
-      patientText || `${consultation.patientName} consulted for ${consultation.chiefConcern}.`,
-    chiefComplaint: consultation.chiefConcern,
-    historyOfPresentIllness:
-      patientText || "Transcript is limited. More patient history is needed for a complete report.",
-    symptoms: patientLines.length > 0 ? patientLines : [consultation.chiefConcern],
-    doctorObservations: doctorLines.length > 0 ? doctorLines : ["Doctor observations need confirmation."],
-    patientStatements: patientLines.length > 0 ? patientLines : ["Patient narrative is limited in the transcript."],
-    assessment: "Draft report generated from the available transcript. Doctor confirmation is required.",
-    carePlan: [
-      "Review the transcript for missing details.",
-      "Confirm duration and severity of symptoms.",
-      "Finalize treatment and follow-up instructions.",
-    ],
-    followUpInstructions: "Advise follow-up if symptoms worsen or do not improve as expected.",
-    redFlags: [
-      "Escalate if serious symptoms are present or newly reported.",
-      "Doctor should verify missing clinical details before final use.",
-    ],
-    transcriptHighlights: consultation.transcript
-      .slice(0, 5)
-      .map((entry) => `${entry.speaker}: ${entry.text}`),
+    summary: `${consultation.patientName} consulted for ${consultation.chiefConcern}. This draft is based on the saved transcript and requires doctor review before use.`,
+    observation:
+      hasPatientInput || hasDoctorInput
+        ? "The transcript contains consultation details from the saved conversation, but AI generation was unavailable. A doctor should verify symptoms, duration, severity, and any missing clinical findings."
+        : "The transcript is limited, so reliable clinical observation cannot be produced without more consultation detail.",
+    precaution:
+      "Follow the doctor's final advice, avoid self-medication unless explicitly recommended, monitor symptom changes, and seek urgent care if severe or worsening symptoms appear.",
     generatedAt: new Date().toISOString(),
     model: "fallback-report-generator",
   };
@@ -87,49 +70,25 @@ function parseJsonReport(text: string): Omit<MedicalReport, "generatedAt" | "mod
   try {
     const parsed = JSON.parse(match[0]) as {
       reportTitle?: string;
-      consultationSummary?: string;
-      chiefComplaint?: string;
-      historyOfPresentIllness?: string;
-      symptoms?: string[];
-      doctorObservations?: string[];
-      patientStatements?: string[];
-      assessment?: string;
-      carePlan?: string[];
-      followUpInstructions?: string;
-      redFlags?: string[];
-      transcriptHighlights?: string[];
+      summary?: string;
+      observation?: string;
+      precaution?: string;
     };
 
     if (
       typeof parsed.reportTitle !== "string" ||
-      typeof parsed.consultationSummary !== "string" ||
-      typeof parsed.chiefComplaint !== "string" ||
-      typeof parsed.historyOfPresentIllness !== "string" ||
-      !Array.isArray(parsed.symptoms) ||
-      !Array.isArray(parsed.doctorObservations) ||
-      !Array.isArray(parsed.patientStatements) ||
-      typeof parsed.assessment !== "string" ||
-      !Array.isArray(parsed.carePlan) ||
-      typeof parsed.followUpInstructions !== "string" ||
-      !Array.isArray(parsed.redFlags) ||
-      !Array.isArray(parsed.transcriptHighlights)
+      typeof parsed.summary !== "string" ||
+      typeof parsed.observation !== "string" ||
+      typeof parsed.precaution !== "string"
     ) {
       return null;
     }
 
     return {
       reportTitle: parsed.reportTitle,
-      consultationSummary: parsed.consultationSummary,
-      chiefComplaint: parsed.chiefComplaint,
-      historyOfPresentIllness: parsed.historyOfPresentIllness,
-      symptoms: parsed.symptoms,
-      doctorObservations: parsed.doctorObservations,
-      patientStatements: parsed.patientStatements,
-      assessment: parsed.assessment,
-      carePlan: parsed.carePlan,
-      followUpInstructions: parsed.followUpInstructions,
-      redFlags: parsed.redFlags,
-      transcriptHighlights: parsed.transcriptHighlights,
+      summary: parsed.summary,
+      observation: parsed.observation,
+      precaution: parsed.precaution,
     };
   } catch {
     return null;

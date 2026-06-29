@@ -59,6 +59,36 @@ consultationsRouter.post("/", async (request, response, next) => {
   }
 });
 
+consultationsRouter.get("/invite/:inviteToken", async (request, response, next) => {
+  try {
+    const consultation = await findConsultationByInviteToken(request.params.inviteToken);
+
+    if (!consultation) {
+      response.status(404).json({ error: "Invite not found." });
+      return;
+    }
+
+    response.status(200).json(consultation);
+  } catch (error) {
+    next(error);
+  }
+});
+
+consultationsRouter.post("/invite/:inviteToken/join", async (request, response, next) => {
+  try {
+    const consultation = await markPatientJoined(request.params.inviteToken);
+
+    if (!consultation) {
+      response.status(404).json({ error: "Invite not found." });
+      return;
+    }
+
+    response.status(200).json(consultation);
+  } catch (error) {
+    next(error);
+  }
+});
+
 consultationsRouter.get("/:consultationId", async (request, response, next) => {
   try {
     const consultation = await findConsultationById(request.params.consultationId);
@@ -152,36 +182,6 @@ consultationsRouter.post("/:consultationId/report", async (request, response, ne
     const report = await generateMedicalReport(consultation);
     const updated = await saveMedicalReport(consultation.id, report);
     response.status(200).json(updated);
-  } catch (error) {
-    next(error);
-  }
-});
-
-consultationsRouter.get("/invite/:inviteToken", async (request, response, next) => {
-  try {
-    const consultation = await findConsultationByInviteToken(request.params.inviteToken);
-
-    if (!consultation) {
-      response.status(404).json({ error: "Invite not found." });
-      return;
-    }
-
-    response.status(200).json(consultation);
-  } catch (error) {
-    next(error);
-  }
-});
-
-consultationsRouter.post("/invite/:inviteToken/join", async (request, response, next) => {
-  try {
-    const consultation = await markPatientJoined(request.params.inviteToken);
-
-    if (!consultation) {
-      response.status(404).json({ error: "Invite not found." });
-      return;
-    }
-
-    response.status(200).json(consultation);
   } catch (error) {
     next(error);
   }

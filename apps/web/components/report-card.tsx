@@ -8,6 +8,21 @@ type ReportCardProps = {
 };
 
 export function ReportCard({ consultation, canGenerate, busy, onGenerate }: ReportCardProps) {
+  const summary =
+    consultation.report?.summary ??
+    consultation.report?.consultationSummary ??
+    "Summary was not available in this report.";
+  const observation =
+    consultation.report?.observation ??
+    consultation.report?.observationSummary ??
+    consultation.report?.doctorObservations?.join(" ") ??
+    "Observation was not available in this report.";
+  const precaution =
+    consultation.report?.precaution ??
+    consultation.report?.precautions?.join(" ") ??
+    consultation.report?.redFlags?.join(" ") ??
+    "Precaution was not available in this report.";
+
   function downloadReport() {
     if (!consultation.report) {
       return;
@@ -19,38 +34,14 @@ export function ReportCard({ consultation, canGenerate, busy, onGenerate }: Repo
       `Generated At: ${consultation.report.generatedAt}`,
       `Model: ${consultation.report.model}`,
       "",
-      "Consultation Summary",
-      consultation.report.consultationSummary,
+      "Summary",
+      summary,
       "",
-      "Chief Complaint",
-      consultation.report.chiefComplaint,
+      "Observation",
+      observation,
       "",
-      "History of Present Illness",
-      consultation.report.historyOfPresentIllness,
-      "",
-      "Symptoms",
-      ...consultation.report.symptoms.map((item) => `- ${item}`),
-      "",
-      "Doctor Observations",
-      ...consultation.report.doctorObservations.map((item) => `- ${item}`),
-      "",
-      "Patient Statements",
-      ...consultation.report.patientStatements.map((item) => `- ${item}`),
-      "",
-      "Assessment",
-      consultation.report.assessment,
-      "",
-      "Care Plan",
-      ...consultation.report.carePlan.map((item) => `- ${item}`),
-      "",
-      "Follow-up Instructions",
-      consultation.report.followUpInstructions,
-      "",
-      "Red Flags",
-      ...consultation.report.redFlags.map((item) => `- ${item}`),
-      "",
-      "Transcript Highlights",
-      ...consultation.report.transcriptHighlights.map((item) => `- ${item}`),
+      "Precaution",
+      precaution,
     ].join("\n");
 
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
@@ -69,10 +60,10 @@ export function ReportCard({ consultation, canGenerate, busy, onGenerate }: Repo
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">
             AI Medical Report
           </p>
-          <h3 className="mt-2 text-xl font-semibold">Generate report from saved transcript</h3>
+          <h3 className="mt-2 text-xl font-semibold">Generate concise AI report</h3>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-            This uses the stored consultation transcript and sends it to the backend AI wrapper,
-            which calls OpenAI to format the medical report.
+            The backend sends the saved transcript to AI and returns only summary, observation,
+            and precaution.
           </p>
         </div>
         <button
@@ -103,102 +94,27 @@ export function ReportCard({ consultation, canGenerate, busy, onGenerate }: Repo
                 Download Report
               </button>
             </div>
-            <p className="mt-4 text-sm leading-6">{consultation.report.consultationSummary}</p>
             <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--muted)]">
               Model: {consultation.report.model}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Chief Complaint
-              </p>
-              <p className="mt-2 text-sm leading-6">{consultation.report.chiefComplaint}</p>
-            </div>
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                HPI
-              </p>
-              <p className="mt-2 text-sm leading-6">{consultation.report.historyOfPresentIllness}</p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Symptoms
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6">
-                {consultation.report.symptoms.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Doctor Observations
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6">
-                {consultation.report.doctorObservations.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
+          <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
+              Summary
+            </p>
+            <p className="mt-2 text-sm leading-6">{summary}</p>
           </div>
           <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-              Patient Statements
+              Observation
             </p>
-            <ul className="mt-2 space-y-2 text-sm leading-6">
-              {consultation.report.patientStatements.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <p className="mt-2 text-sm leading-6">{observation}</p>
           </div>
           <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-              Assessment
+              Precaution
             </p>
-            <p className="mt-2 text-sm leading-6">{consultation.report.assessment}</p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Care Plan
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6">
-                {consultation.report.carePlan.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Follow-up
-              </p>
-              <p className="mt-2 text-sm leading-6">{consultation.report.followUpInstructions}</p>
-            </div>
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Red Flags
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6">
-                {consultation.report.redFlags.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-[1rem] bg-[var(--surface-strong)] p-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent-strong)]">
-                Transcript Highlights
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6">
-                {consultation.report.transcriptHighlights.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
+            <p className="mt-2 text-sm leading-6">{precaution}</p>
           </div>
         </div>
       ) : (
